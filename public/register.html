@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация | Tasker</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="register">
+    <main class="page">
+        <header class="topbar">
+            <div>
+                <h1 class="brand">Tasker</h1>
+                <p class="subtitle">Создайте аккаунт, чтобы заметки хранились на сервере.</p>
+            </div>
+            <a class="button-link button-secondary" href="/login">Вход</a>
+        </header>
+        <div id="flash"></div>
+        <section class="card auth-single">
+            <h2>Регистрация</h2>
+            <p>Новый пользователь сразу получает собственное пространство заметок.</p>
+            <form id="registerForm" class="card-stack">
+                <div class="field">
+                    <label for="registerLogin">Логин</label>
+                    <input id="registerLogin" name="login" type="text" minlength="3" maxlength="50" required autofocus>
+                </div>
+                <div class="field">
+                    <label for="registerPassword">Пароль</label>
+                    <input id="registerPassword" name="password" type="password" minlength="4" required>
+                </div>
+                <button type="submit">Создать аккаунт</button>
+            </form>
+        </section>
+    </main>
+    <script src="/script.js"></script>
+</body>
+</html>

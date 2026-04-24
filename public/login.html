@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход | Tasker</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="login">
+    <main class="page">
+        <header class="topbar">
+            <div>
+                <h1 class="brand">Tasker</h1>
+                <p class="subtitle">Простая страница входа без клиентского шаблонизатора.</p>
+            </div>
+            <a class="button-link button-secondary" href="/register">Регистрация</a>
+        </header>
+        <div id="flash"></div>
+        <section class="card auth-single">
+            <h2>Вход</h2>
+            <p>Войдите в существующий аккаунт.</p>
+            <form id="loginForm" class="card-stack">
+                <div class="field">
+                    <label for="login">Логин</label>
+                    <input id="login" name="login" type="text" minlength="3" maxlength="50" required autofocus>
+                </div>
+                <div class="field">
+                    <label for="loginPassword">Пароль</label>
+                    <input id="loginPassword" name="password" type="password" minlength="4" required>
+                </div>
+                <button type="submit">Войти</button>
+            </form>
+        </section>
+    </main>
+    <script src="/script.js"></script>
+</body>
+</html>

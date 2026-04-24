@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои заметки | Tasker</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="notes">
+    <main class="page">
+        <header class="topbar">
+            <div>
+                <h1 class="brand">Tasker</h1>
+                <p class="subtitle">Пользователь: <span id="currentUserLogin"></span></p>
+            </div>
+            <button id="logoutButton" type="button" class="button-secondary">Выйти</button>
+        </header>
+        <div id="flash"></div>
+        <section class="card card-stack">
+            <div class="section-head">
+                <div>
+                    <h2>Мои заметки</h2>
+                    <p>Обычная HTML-страница со списком записей.</p>
+                </div>
+                <a class="button-link" href="/notes/new">+ Новая заметка</a>
+            </div>
+            <div id="notesList"></div>
+        </section>
+    </main>
+    <script src="/script.js"></script>
+</body>
+</html>

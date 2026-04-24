@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор заметки | Tasker</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="editor">
+    <main class="page">
+        <header class="topbar">
+            <div>
+                <h1 class="brand">Tasker</h1>
+                <p class="subtitle">Пользователь: <span id="currentUserLogin"></span></p>
+            </div>
+            <button id="logoutButton" type="button" class="button-secondary">Выйти</button>
+        </header>
+        <div id="flash"></div>
+        <section class="card">
+            <div class="section-head">
+                <div>
+                    <h2 id="editorHeading">Новая заметка</h2>
+                    <p id="editorDescription">Создайте новую запись и сохраните её на сервере.</p>
+                </div>
+                <a class="button-link button-secondary" href="/notes">Назад к списку</a>
+            </div>
+            <form id="noteForm" class="card-stack">
+                <div class="field">
+                    <label for="noteTitle">Заголовок</label>
+                    <input id="noteTitle" name="title" type="text" maxlength="120" required autofocus>
+                </div>
+                <div class="field">
+                    <label for="noteContent">Текст</label>
+                    <textarea id="noteContent" name="content" placeholder="Введите текст заметки"></textarea>
+                </div>
+                <div class="button-row">
+                    <button type="submit">Сохранить</button>
+                    <a class="button-link button-secondary" href="/notes">Отмена</a>
+                    <button id="deleteNoteButton" type="button" class="button-danger" hidden>Удалить</button>
+                </div>
+            </form>
+        </section>
+    </main>
+    <script src="/script.js"></script>
+</body>
+</html>
