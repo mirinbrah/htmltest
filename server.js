@@ -6,6 +6,27 @@ const { Sequelize, DataTypes } = require('sequelize');
 
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
 
+const MESSAGES = {
+    AUTH: {
+        REQUIRED: MESSAGES.AUTH.REQUIRED,
+        LOGIN_SHORT: MESSAGES.AUTH.LOGIN_SHORT,
+        PASSWORD_SHORT: MESSAGES.AUTH.PASSWORD_SHORT,
+        EXISTS: MESSAGES.AUTH.EXISTS,
+        CREATED: MESSAGES.AUTH.CREATED,
+        INVALID: MESSAGES.AUTH.INVALID,
+        LOGGED_IN: MESSAGES.AUTH.LOGGED_IN,
+        LOGGED_OUT: MESSAGES.AUTH.LOGGED_OUT
+    },
+    NOTES: {
+        TITLE_REQUIRED: MESSAGES.NOTES.TITLE_REQUIRED,
+        SAVED: MESSAGES.NOTES.SAVED,
+        NOT_FOUND: MESSAGES.NOTES.NOT_FOUND,
+        UPDATED: MESSAGES.NOTES.UPDATED,
+        DELETED: MESSAGES.NOTES.DELETED
+    },
+    API: { NOT_FOUND: MESSAGES.API.NOT_FOUND }
+};
+
 const app = express();
 const port = process.env.PORT || 3000;
 const databasePath = path.join(__dirname, 'data', 'tasker.sqlite');
@@ -95,7 +116,7 @@ function sendPage(res, fileName) {
 function requireAuth(req, res, next) {
     if (!req.session.user) {
         return res.status(401).json({
-            error: 'Сначала войдите в аккаунт.'
+            error: MESSAGES.AUTH.REQUIRED
         });
     }
 
@@ -188,16 +209,16 @@ app.post('/api/register', async (req, res) => {
     const password = String(req.body.password || '').trim();
 
     if (login.length < 4) {
-        return sendError(res, 400, 'Логин должен быть не короче 4 символов.');
+        return sendError(res, 400, MESSAGES.AUTH.LOGIN_SHORT);
     }
 
     if (password.length < 4) {
-        return sendError(res, 400, 'Пароль должен быть не короче 4 символов.');
+        return sendError(res, 400, MESSAGES.AUTH.PASSWORD_SHORT);
     }
 
     const existingUser = await User.findOne({ where: { login } });
     if (existingUser) {
-        return sendError(res, 409, 'Пользователь с таким логином уже существует.');
+        return sendError(res, 409, MESSAGES.AUTH.EXISTS);
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -205,7 +226,7 @@ app.post('/api/register', async (req, res) => {
 
     req.session.user = serializeUser(user);
     res.status(201).json({
-        message: 'Аккаунт создан.',
+        message: MESSAGES.AUTH.CREATED,
         user: req.session.user
     });
 });
@@ -216,18 +237,18 @@ app.post('/api/login', async (req, res) => {
 
     const user = await User.findOne({ where: { login } });
     if (!user) {
-        return sendError(res, 401, 'Неверный логин или пароль.');
+        return sendError(res, 401, MESSAGES.AUTH.INVALID);
     }
 
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
-        return sendError(res, 401, 'Неверный логин или пароль.');
+        return sendError(res, 401, MESSAGES.AUTH.INVALID);
     }
 
     req.session.user = serializeUser(user);
 
     res.json({
-        message: 'Вы вошли в систему.',
+        message: MESSAGES.AUTH.LOGGED_IN,
         user: req.session.user
     });
 });
@@ -235,7 +256,7 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/logout', (req, res) => {
     req.session.destroy(() => {
         res.json({
-            message: 'Вы вышли из системы.'
+            message: MESSAGES.AUTH.LOGGED_OUT
         });
     });
 });
@@ -256,7 +277,7 @@ app.post('/api/notes', requireAuth, async (req, res) => {
     const content = String(req.body.content || '').trim();
 
     if (!title) {
-        return sendError(res, 400, 'Введите заголовок заметки.');
+        return sendError(res, 400, MESSAGES.NOTES.TITLE_REQUIRED);
     }
 
     const note = await Note.create({
@@ -266,7 +287,7 @@ app.post('/api/notes', requireAuth, async (req, res) => {
     });
 
     res.status(201).json({
-        message: 'Заметка сохранена.',
+        message: MESSAGES.NOTES.SAVED,
         note: serializeNote(note)
     });
 });
@@ -274,7 +295,7 @@ app.post('/api/notes', requireAuth, async (req, res) => {
 app.get('/api/notes/:id', requireAuth, async (req, res) => {
     const note = await findOwnNote(req.params.id, req.session.user.id);
     if (!note) {
-        return sendError(res, 404, 'Заметка не найдена.');
+        return sendError(res, 404, MESSAGES.NOTES.NOT_FOUND);
     }
 
     res.json({
@@ -285,13 +306,13 @@ app.get('/api/notes/:id', requireAuth, async (req, res) => {
 app.put('/api/notes/:id', requireAuth, async (req, res) => {
     const note = await findOwnNote(req.params.id, req.session.user.id);
     if (!note) {
-        return sendError(res, 404, 'Заметка не найдена.');
+        return sendError(res, 404, MESSAGES.NOTES.NOT_FOUND);
     }
 
     const title = String(req.body.title || '').trim();
     const content = String(req.body.content || '').trim();
     if (!title) {
-        return sendError(res, 400, 'Введите заголовок заметки.');
+        return sendError(res, 400, MESSAGES.NOTES.TITLE_REQUIRED);
     }
 
     note.title = title;
@@ -299,7 +320,7 @@ app.put('/api/notes/:id', requireAuth, async (req, res) => {
     await note.save();
 
     res.json({
-        message: 'Изменения сохранены.',
+        message: MESSAGES.NOTES.UPDATED,
         note: serializeNote(note)
     });
 });
@@ -307,18 +328,18 @@ app.put('/api/notes/:id', requireAuth, async (req, res) => {
 app.delete('/api/notes/:id', requireAuth, async (req, res) => {
     const note = await findOwnNote(req.params.id, req.session.user.id);
     if (!note) {
-        return sendError(res, 404, 'Заметка не найдена.');
+        return sendError(res, 404, MESSAGES.NOTES.NOT_FOUND);
     }
 
     await note.destroy();
     res.json({
-        message: 'Заметка удалена.'
+        message: MESSAGES.NOTES.DELETED
     });
 });
 
 app.use((req, res) => {
     if (req.path.startsWith('/api/')) {
-        return sendError(res, 404, 'Маршрут API не найден.');
+        return sendError(res, 404, MESSAGES.API.NOT_FOUND);
     }
 
     res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));

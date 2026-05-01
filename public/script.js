@@ -1,27 +1,22 @@
+const MESSAGES = {
+    ERROR_REQUEST: MESSAGES.ERROR_REQUEST,
+    CONFIRM_DELETE: MESSAGES.CONFIRM_DELETE,
+    NOTE_DELETED: MESSAGES.NOTE_DELETED
+};
+
 const flashNode = document.getElementById('flash');
 const page = document.body.dataset.page;
 let isSubmitting = false;
 
 function escapeHtml(value) {
-    return String(value)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
+    const chars = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(value).replace(/[&<>"']/g, c => chars[c]);
 }
 
 function setFlash(type, message) {
-    if (!flashNode) {
-        return;
+    if (flashNode) {
+        flashNode.innerHTML = message ? `<div class="flash flash-${escapeHtml(type)}">${escapeHtml(message)}</div>` : '';
     }
-
-    if (!message) {
-        flashNode.innerHTML = '';
-        return;
-    }
-
-    flashNode.innerHTML = `<div class="flash flash-${escapeHtml(type)}">${escapeHtml(message)}</div>`;
 }
 
 async function request(url, options = {}) {
@@ -38,7 +33,7 @@ async function request(url, options = {}) {
     const payload = hasJson ? await response.json() : null;
 
     if (!response.ok) {
-        throw new Error(payload?.error || 'Ошибка запроса');
+        throw new Error(payload?.error || MESSAGES.ERROR_REQUEST);
     }
 
     return payload;
@@ -49,13 +44,7 @@ function getQueryParam(name) {
 }
 
 function getEditorNoteId() {
-    const queryId = getQueryParam('id');
-    if (queryId) {
-        return queryId;
-    }
-
-    const match = window.location.pathname.match(/^\/notes\/(\d+)\/edit$/);
-    return match ? match[1] : null;
+    return getQueryParam('id') || window.location.pathname.match(/^\/notes\/(\d+)\/edit$/)?.[1] || null;
 }
 
 function redirectTo(path) {
@@ -63,8 +52,7 @@ function redirectTo(path) {
 }
 
 async function syncSession() {
-    const payload = await request('/api/session');
-    return payload.user;
+    return (await request('/api/session'))?.user;
 }
 
 function bindAuthForm(formId, endpoint, successRedirect) {
@@ -181,7 +169,7 @@ async function bindNotesPage(user) {
             return;
         }
 
-        if (!window.confirm('Удалить заметку без возможности восстановления?')) {
+        if (!window.confirm(MESSAGES.CONFIRM_DELETE)) {
             return;
         }
 
@@ -191,7 +179,7 @@ async function bindNotesPage(user) {
                 method: 'DELETE'
             });
             await loadNotes();
-            setFlash('success', 'Заметка удалена.');
+            setFlash('success', MESSAGES.NOTE_DELETED);
         } catch (error) {
             setFlash('error', error.message);
         } finally {
@@ -256,7 +244,7 @@ async function bindEditorPage(user) {
                 return;
             }
 
-            if (!window.confirm('Удалить заметку без возможности восстановления?')) {
+            if (!window.confirm(MESSAGES.CONFIRM_DELETE)) {
                 return;
             }
 
@@ -276,16 +264,8 @@ async function bindEditorPage(user) {
 }
 
 function showFlashFromQuery() {
-    const error = getQueryParam('error');
-    if (error) {
-        setFlash('error', error);
-        return;
-    }
-
-    const message = getQueryParam('message');
-    if (message) {
-        setFlash('success', message);
-    }
+    if (getQueryParam('error')) setFlash('error', getQueryParam('error'));
+    else if (getQueryParam('message')) setFlash('success', getQueryParam('message'));
 }
 
 async function bootstrap() {
@@ -293,24 +273,21 @@ async function bootstrap() {
         showFlashFromQuery();
         const user = await syncSession();
 
-        if ((page === 'login' || page === 'register') && user) {
-            redirectTo('/notes');
-            return;
-        }
+        const isGuestPage = ['login', 'register'].includes(page);
+        const isAuthPage = ['notes', 'editor'].includes(page);
 
-        if ((page === 'notes' || page === 'editor') && !user) {
-            redirectTo('/login');
-            return;
-        }
+        if (isGuestPage && user) return redirectTo('/notes');
+        if (isAuthPage && !user) return redirectTo('/login');
 
-        if (page === 'login') {
-            bindAuthForm('loginForm', '/api/login', '/notes');
-        } else if (page === 'register') {
-            bindAuthForm('registerForm', '/api/register', '/notes');
-        } else if (page === 'notes') {
-            await bindNotesPage(user);
-        } else if (page === 'editor') {
-            await bindEditorPage(user);
+        const pageHandlers = {
+            login: () => bindAuthForm('loginForm', '/api/login', '/notes'),
+            register: () => bindAuthForm('registerForm', '/api/register', '/notes'),
+            notes: () => bindNotesPage(user),
+            editor: () => bindEditorPage(user)
+        };
+
+        if (pageHandlers[page]) {
+            await pageHandlers[page]();
         }
     } catch (error) {
         setFlash('error', error.message);
